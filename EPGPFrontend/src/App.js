@@ -25,7 +25,7 @@ function App() {
       <h1 className="text-center mb-4">IIMK EPGP 17</h1>
       <div className="row gy-4">
         {profiles.map((profile, index) => (
-          <div className="col-sm-12 col-md-6 col-lg-6" key={index}>
+          <div className="col-sm-12 col-md-6 col-lg-4" key={index}>
             <div className="card w-100">
               <div className="row">
                 <div className="col-4"> 
