@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: EPGP17 API
+  version: 1.0.0
+  description: Directory API for EPGP17
+paths:
+  /api/users/:
+    get:
+      operationId: root_retrieve
+      description: Get all users.
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/users/{id}/:
+    get:
+      operationId: root_retrieve_2
+      description: Get user by ID.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/users/{id}/delete:
+    delete:
+      operationId: delete_destroy
+      description: Delete a user.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - delete
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/users/{id}/update:
+    put:
+      operationId: update_update
+      description: |-
+        Update a user.
+
+        POST Parameters:
+        - id: int (mandatory)
+        - first_name: str (optional)
+        - last_name: str (optional)
+        - password: str (optional)
+
+        Returns:
+        - user: json
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - update
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/users/create/:
+    post:
+      operationId: create_create
+      description: |-
+        Create a new user.
+
+        POST Parameters:
+        - email: str (unique - IIMK email)
+        - first_name: str
+        - last_name: str
+        - password: str
+
+        Returns:
+        - user: json
+      tags:
+      - create
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

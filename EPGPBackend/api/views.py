@@ -1,7 +1,17 @@
 """API Endpoints"""
 
 from django.http import JsonResponse  # type: ignore
-from django.contrib.auth.models import User  # type: ignore
+from users.models import User
+from users.managers import UserManager
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import UserSerializer
+
+####################################################################################################
+# Index
+####################################################################################################
 
 
 def index(request):
@@ -22,6 +32,26 @@ def index(request):
 ####################################################################################################
 
 
+@api_view(["GET"])
+def get_users(request) -> Response:
+    """Get all users."""
+    return Response(UserSerializer(User.objects.all(), many=True).data)
+
+
+@api_view(["GET"])
+def get_user(request, id: int) -> Response:
+    """Get user by ID."""
+    try:
+        user = User.objects.get(id=id)
+    except User.DoesNotExist:
+        return Response(
+            {"status": "ERROR", "message": "User not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    return Response(UserSerializer(user).data)
+
+
+@api_view(["POST"])
 def create_user(request):
     """Create a new user.
 
@@ -32,52 +62,76 @@ def create_user(request):
     - password: str
 
     Returns:
-    - user: dict
+    - user: json
     """
-    if request.method == "POST":
-        data = request.POST
-        username = data.get("username")
-        first_name = data.get("first_name")
-        last_name = data.get("last_name")
-        password = data.get("password")
-
-        # check if all parameters are present
-        if not username or not first_name or not last_name or not password:
-            return JsonResponse(
-                {"status": "ERROR", "message": "Missing required parameters."},
-                status=400,
-            )
-
-        # check if user already exists
-        if User.objects.filter(username=username).exists():
-            return JsonResponse(
-                {"status": "ERROR", "message": "User already exists."}, status=400
-            )
-
-        # check if email is valid
-        if not username.endswith("@iimk.edu.in"):
-            return JsonResponse(
-                {"status": "ERROR", "message": "Invalid email. Must be IIMK email."},
-                status=400,
-            )
-
+    user_data = UserSerializer(data=request.data)
+    if user_data.is_valid():
         # create user
-        user = User.objects.create_user(
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            password=password,
+        user = user_data.save()
+        user.set_password(user.password)
+        user.save()
+        return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+
+    return Response(user_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["PUT"])
+def update_user(request, id: int):  # TODO: Rewrite this function to use partial updates
+    """Update a user.
+
+    POST Parameters:
+    - id: int (mandatory)
+    - first_name: str (optional)
+    - last_name: str (optional)
+    - password: str (optional)
+
+    Returns:
+    - user: json
+    """
+    try:
+        user = User.objects.get(id=id)
+    except User.DoesNotExist:
+        return Response(
+            {"status": "ERROR", "message": "User not found."},
+            status=status.HTTP_404_NOT_FOUND,
         )
 
-        return JsonResponse(
-            {
-                "status": "OK",
-                "message": "User created.",
-                "user": {
-                    "username": user.username,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                },
-            },
-            status=201,
+    try:
+        if "first_name" in request.data:
+            user.first_name = request.data["first_name"]
+        if "last_name" in request.data:
+            user.last_name = request.data["last_name"]
+        if "password" in request.data:
+            user.set_password(user.password)
+        user.save()
+
+        if "password" not in request.data:
+            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+
+        return Response(
+            {"status": "OK", "message": "Password changed successfully."},
+            status=status.HTTP_201_CREATED,
         )
+
+    except Exception as e:
+        return Response(
+            {"status": "ERROR", "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(["DELETE"])
+def delete_user(request, id: int):
+    """Delete a user."""
+    try:
+        user = User.objects.get(id=id)
+    except User.DoesNotExist:
+        return Response(
+            {"status": "ERROR", "message": "User not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    user.delete()
+    return Response(
+        {"status": "OK", "message": "User deleted successfully."},
+        status=status.HTTP_204_NO_CONTENT,
+    )
