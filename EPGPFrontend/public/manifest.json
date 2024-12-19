@@ -1,0 +1,9 @@
+{
+    "name": "EPGPFrontend",
+    "short_name": "EPGP17",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
+    "description": "EPGP17 Frontend Application"
+}
