@@ -1,8 +1,8 @@
 """API Endpoints"""
 
 from django.http import JsonResponse  # type: ignore
+from django.contrib.auth import authenticate
 from users.models import User
-from users.managers import UserManager
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -28,7 +28,7 @@ def index(request):
 
 
 ####################################################################################################
-# Users
+# Users and auth
 ####################################################################################################
 
 
@@ -134,4 +134,45 @@ def delete_user(request, id: int):
     return Response(
         {"status": "OK", "message": "User deleted successfully."},
         status=status.HTTP_204_NO_CONTENT,
+    )
+
+
+@api_view(["POST"])
+def login(request):
+    """Login Endpoint"""
+    data = request.data
+    email = data.get("email")
+    password = data.get("password")
+
+    if email is None or password is None:
+        return Response(
+            {"status": "ERROR", "message": "Email and password are required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user = authenticate(request, username=email, password=password)
+
+    if user is not None:
+        return Response(
+            {
+                "status": "OK",
+                "message": "Login successful.",
+                "user": UserSerializer(user).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+    else:
+        return Response(
+            {"status": "ERROR", "message": "Invalid email or password."},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+
+@api_view(["GET"])
+def logout(request):
+    """Logout Endpoint"""
+    logout(request)
+    return Response(
+        {"message": "Logout successful."},
+        status=status.HTTP_200_OK,
     )
